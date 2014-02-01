@@ -1,5 +1,9 @@
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class ChordNameServiceImpl extends Thread implements ChordNameService  {
@@ -78,6 +82,35 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
     
     public void run() {
 	System.out.println("My name is " + myName + " and my key is " + myKey);
+	
+	if(joining){
+		
+		try {
+			Socket known = new Socket(connectedAt.getAddress(),4001);
+			PrintWriter out = new PrintWriter(known.getOutputStream());
+			
+			out.println("enter group plix");
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("joining");
+		
+	}
+	
+	try {
+		System.out.println(port);
+		ServerSocket local = new ServerSocket(port);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
+	while(true){
+		
+	}
 
 	/*
 	 * If joining we should now enter the existing group and
@@ -85,7 +118,7 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 	 * already done and start listening for incoming connection
 	 * from other peers who want to enter or leave the
 	 * group. After leaveGroup() was called, the run() method
-	 * should return so that the threat running it might
+	 * should return so that the thread running it might
 	 * terminate.
 	 */
     }
