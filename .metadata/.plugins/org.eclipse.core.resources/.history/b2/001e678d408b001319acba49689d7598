@@ -1,0 +1,40 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+
+public class SocketTest {
+	public static void main(String[] args){
+		
+		
+		try {
+			ServerSocket server = new ServerSocket(40001);
+			Socket conn = server.accept();
+			
+			Socket test = new Socket(server.getInetAddress(), 40001);
+			
+			PrintWriter printer = new PrintWriter(test.getOutputStream());
+			
+			BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			
+			while(true){
+				System.out.print("Should be output here: ");
+				printer.println("test");
+				while(reader.readLine()!=null){
+					System.out.println(reader.readLine());
+				}
+				
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+
+}

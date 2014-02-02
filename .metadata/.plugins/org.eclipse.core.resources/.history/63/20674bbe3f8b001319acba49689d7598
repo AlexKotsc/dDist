@@ -1,0 +1,13 @@
+import java.net.ServerSocket;
+
+
+public class SocketTest {
+	public static void main(String[] args){
+		
+		ServerSocket server = new ServerSocket(40001);
+		Socket conn = server.accept();
+		
+		
+	}
+
+}

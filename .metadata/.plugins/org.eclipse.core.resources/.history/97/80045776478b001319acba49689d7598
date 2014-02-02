@@ -1,0 +1,32 @@
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+
+public class OutputWriter implements Runnable {
+
+	Socket s;
+	int port;
+	PrintWriter p;
+
+	public OutputWriter(Socket s, int port){
+		this.s = s;
+		this.port = port;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		try {
+			p = new PrintWriter(s.getOutputStream());
+			
+			while(true){
+				p.println("Test@" + port);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

@@ -1,0 +1,12 @@
+
+public class OutputWriter implements Runnable {
+	
+	
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+
+	}
+
+}
