@@ -17,7 +17,11 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService {
 	private InetSocketAddress suc;
 	private InetSocketAddress pre;
 	private InetSocketAddress connectedAt;
-
+	
+	
+	volatile boolean leaving = false;
+	
+	
 	public int keyOfName(InetSocketAddress name) {
 		int tmp = name.hashCode() * 1073741651 % 2147483647;
 		if (tmp < 0) {
@@ -66,6 +70,8 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService {
 
 	public synchronized void leaveGroup() {
 		
+		leaving = true;
+		
 	}
 
 	public InetSocketAddress succ() {
@@ -86,14 +92,55 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService {
 	}
 
 	public synchronized void run() {
-
 		
-		System.out.println("My name is " + myName + " and my key is " + myKey);
-		
-		if(joining){
-			//Enter group
+		try (
+				
+				
+			ServerSocket inc = new ServerSocket(port);
+				
+				
+		){
+			System.out.println("My name is " + myName + " and my key is " + myKey);
+			
+			
+			
+			if(joining){
+				//Enter group here.
+				System.out.println("Trying to connect to " + connectedAt.getPort());
+				Socket outSocket = new Socket(connectedAt.getAddress(),connectedAt.getPort());
+				BufferedReader reader = new BufferedReader(new InputStreamReader(outSocket.getInputStream()));
+				PrintWriter writer = new PrintWriter(outSocket.getOutputStream());
+				
+				while(reader.readLine()!=null){
+					writer.println("Hej@" + port);
+				}
+			}
+			
+			
+			
+			//Loop that waits for connections after initial connections and changes have been made.
+			while(true){
+				if(leaving){
+					inc.close();
+				}
+				
+				//Handle ServerSocket connections here.
+				Socket incSocket = inc.accept();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(incSocket.getInputStream()));
+				PrintWriter writer = new PrintWriter(incSocket.getOutputStream());
+				
+				writer.println("Hello");
+				
+				while(reader.readLine()!=null){
+					System.out.println(myKey + ":" + port + " - " + reader.readLine());
+				}
+				
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-
 		
 		/*
 		 * If joining we should now enter the existing group and should at some
@@ -102,8 +149,6 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService {
 		 * or leave the group. After leaveGroup() was called, the run() method
 		 * should return so that the thread running it might terminate.
 		 */
-
-
 		return;
 	}
 
