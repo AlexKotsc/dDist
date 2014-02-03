@@ -1,0 +1,16 @@
+
+public class IncomingSocket implements Runnable {
+
+	Socket s;
+	
+	public IncomingSocket(Socket s){
+		
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

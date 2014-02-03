@@ -1,0 +1,18 @@
+import java.net.Socket;
+
+
+public class IncomingSocket implements Runnable {
+
+	Socket s;
+	
+	public IncomingSocket(Socket s){
+		this.s = s;
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
