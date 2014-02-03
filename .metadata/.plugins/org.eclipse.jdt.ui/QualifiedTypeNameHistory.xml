@@ -4,4 +4,5 @@
 <fullyQualifiedTypeName name="javax.print.DocFlavor.READER"/>
 <fullyQualifiedTypeName name="java.io.Reader"/>
 <fullyQualifiedTypeName name="java.net.Socket"/>
+<fullyQualifiedTypeName name="java.net.UnknownHostException"/>
 </qualifiedTypeNameHistroy>

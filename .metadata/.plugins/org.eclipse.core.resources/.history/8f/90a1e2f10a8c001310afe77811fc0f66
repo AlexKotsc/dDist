@@ -1,0 +1,26 @@
+package test;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+	
+	int port;
+	
+	public Server(int port){
+		this.port = port;
+		
+		try {
+			ServerSocket server = new ServerSocket(port);
+			
+			Socket conn = server.accept();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+}

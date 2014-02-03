@@ -1,0 +1,16 @@
+package test;
+import java.net.ServerSocket;
+
+public class Client {
+	
+	int port;
+	
+	public Client(int port){
+		this.port = port;		
+	}
+	
+	public void connectAndWrite(){
+		
+	}
+
+}

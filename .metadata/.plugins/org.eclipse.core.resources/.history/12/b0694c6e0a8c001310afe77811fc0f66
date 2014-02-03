@@ -1,0 +1,18 @@
+package test;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Client {
+	
+	int port;
+	
+	public Client(int port){
+		this.port = port;		
+	}
+	
+	public void connectAndWrite(){
+		Socket conn = new Socket(InetAddress.getLocalHost(),port);
+	}
+
+}

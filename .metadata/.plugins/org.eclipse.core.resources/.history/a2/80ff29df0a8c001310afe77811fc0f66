@@ -1,0 +1,17 @@
+package test;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+
+public class Server {
+	
+	int port;
+	
+	public Server(int port) throws IOException{
+		this.port = port;
+		
+		ServerSocket server = new ServerSocket(port);
+		
+	}
+
+}
