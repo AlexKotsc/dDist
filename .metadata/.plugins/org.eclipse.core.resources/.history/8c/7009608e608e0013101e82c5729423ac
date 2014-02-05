@@ -1,0 +1,48 @@
+package ex9;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ListenRunnable implements Runnable {
+	
+	int port;
+	ServerSocket server;
+	boolean ready;
+	
+	public ListenRunnable(int port){
+		this.port = port;
+		ready = false;
+	}
+	
+	public InetAddress getAddress(){
+		return server.get
+		return server.getInetAddress();
+	}
+	
+	public int getPort(){
+		return server.getLocalPort();
+	}
+	
+	public boolean isReady(){
+		return ready;
+	}
+
+	@Override
+	public void run() {
+		try {
+			server = new ServerSocket(port);
+			ready = true;
+			while(true){
+				Socket incoming = server.accept();
+				
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+}

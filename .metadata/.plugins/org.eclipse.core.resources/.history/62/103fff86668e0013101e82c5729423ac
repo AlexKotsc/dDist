@@ -1,0 +1,11 @@
+package ex9;
+
+public class ConnectRunnable implements Runnable {
+
+	@Override
+	public void run() {
+		
+		
+	}
+
+}

@@ -1,0 +1,15 @@
+package ex9;
+
+public class ListenRunnable implements Runnable {
+	
+	public ListenRunnable(int port){
+		
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
