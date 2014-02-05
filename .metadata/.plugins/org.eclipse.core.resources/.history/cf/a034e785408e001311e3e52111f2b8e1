@@ -55,6 +55,7 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 		this.port = port;
 		myName = _getMyName();
 		myKey = keyOfName(myName);
+		pre = myName;
 		start();
 	}
 
@@ -86,87 +87,40 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 		final int tempKey = key;
 
 		if(key != keyOfName(myName)){
-			
-			System.out.println("Key is not this address");
-			System.out.println(key + "!=" + keyOfName(myName));
-			
+
+			System.out.println("Key is not this address: unknown " + key + "!= my key " + keyOfName(myName));
+
 			String fromServer;
-			
+
 			try {
 				Socket s = new Socket(connectedAt.getAddress(),connectedAt.getPort());
-				System.out.println(s.isConnected());
+
 				BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
 				PrintWriter writer = new PrintWriter(s.getOutputStream(),true);
+
+
 				writer.println("lookup");
 				writer.println(Integer.toString(tempKey));
 
 				while((fromServer=reader.readLine())!=null){
-					System.out.println(fromServer);
 					String tempString = reader.readLine();
 
 					tempAddr = new InetSocketAddress(fromServer,Integer.parseInt(tempString));
+					System.out.println("Server@" + s.getPort() + " says: " + tempAddr);
 				}
-				
+
 				reader.close();
 				writer.close();
 				s.close();
 
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			return tempAddr;
 		}
 
-//		Runnable myRun = new Runnable() {
-//			@Override
-//			public void run() {
-//				// TODO Auto-generated method stub
-//
-//				String fromServer;
-//
-//				try {
-//					Socket s = new Socket(connectedAt.getAddress(),connectedAt.getPort());
-//					BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-//					PrintWriter writer = new PrintWriter(s.getOutputStream(),true);
-//
-//					writer.println("lookup");
-//					writer.println(Integer.toString(tempKey));
-//
-//					while((fromServer=reader.readLine())!=null){
-//						System.out.println(fromServer);
-//						String tempString = reader.readLine();
-//
-//						tempAddr = new InetSocketAddress(fromServer,Integer.parseInt(tempString));
-//						
-//						return;
-//
-//					}
-//
-//
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-//		};
-//
-//
-//		if(key != keyOfName(myName)){
-//			Thread t = new Thread(myRun);
-//			t.start();
-//			try {
-//				t.join();
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			System.out.println("lpl" + tempAddr);
-//			return tempAddr;
-//
-//
-//		}
+
 		/*
 		 * The below works fine for singleton groups, but you might
 		 * want to connect to the rest of the group to lookup the
@@ -185,7 +139,7 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 
 		if(joining){
 
-			Thread t = new Thread(new Runnable() {
+			Runnable myRun = new Runnable() {
 
 				@Override
 				public void run() {
@@ -193,19 +147,20 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 					//Enter group
 					try {
 						synchronized(this){
-							wait(1000);
+							wait(10);
 						}
 						String fromServer;
-						//System.out.println(connectedAt.getAddress() + ":" + connectedAt.getPort());
+						
 						Socket conn = new Socket(connectedAt.getAddress(),connectedAt.getPort());
+						
 						BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 						PrintWriter writer = new PrintWriter(conn.getOutputStream(),true);
 
+						
 						writer.println("joinGroup");
 						while((fromServer=reader.readLine())!=null){
 							System.out.println("Server@" + connectedAt.getPort() + " says: " + fromServer);
 							pre = lookup(Integer.parseInt(fromServer));
-							System.out.println("lals" + lookup(Integer.parseInt(fromServer)));
 						}
 						reader.close();
 						writer.close();
@@ -215,70 +170,32 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 						System.out.println("Something went wrong in the joining thread");
 						e.printStackTrace();
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
-			});
+			};
+
+			Thread t = new Thread(myRun);
 
 			t.start();
 		}
 
 		initServer();
-		
+
 		while(true){
+
+			Socket incoming;
+
 			try {
-				if(serve != null){
-
-					String fromClient;
-					
-					Socket incoming;
-					while((incoming=serve.accept())!=null){
-						BufferedReader reader = new BufferedReader(new InputStreamReader(incoming.getInputStream()));
-						PrintWriter writer = new PrintWriter(incoming.getOutputStream(),true);
-
-
-						while((fromClient=reader.readLine())!=null){
-							System.out.println("Client@" + incoming.getLocalPort() + " says: " + fromClient);
-							//Appropriate conditionals and writer prints.
-							switch(fromClient){
-							case "joinGroup":
-								writer.println(keyOfName(pre));
-							case "lookup":
-								InetSocketAddress temp = lookup(Integer.parseInt(reader.readLine()));
-								writer.println(temp.getHostName());
-								writer.println(Integer.toString(temp.getPort()));
-
-							}
-							//writer.println("I say: Screw you!");
-
-						}
-
-						reader.close();
-						writer.close();
-						incoming.close();
-					}
+				if((incoming=serve.accept())!=null){
+					Thread t = new Thread(new IncomingSocket(this,incoming));
+					t.start();
 				}
-
-				//				if(leaving){
-				//					try {
-				//						serve.close();
-				//					} catch (IOException e) {
-				//						System.out.println("Couldn't close ServerSocket");
-				//						e.printStackTrace();
-				//					}
-				//				}
-
 			} catch (IOException e) {
-				System.out.println("Something went wrong in while loop");
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-
-
-
-
-
 
 		/*
 		 * If joining we should now enter the existing group and
@@ -300,19 +217,20 @@ public class ChordNameServiceImpl extends Thread implements ChordNameService  {
 		peer2.joinGroup(peer1.getChordName(),40002);
 		peer3.joinGroup(peer2.getChordName(),40003);
 
+
 		peer1.leaveGroup();
 		peer3.leaveGroup();
 		peer2.leaveGroup();
 	}
-	
+
 	private void initServer(){
-		
-			try {
-				serve = new ServerSocket(port);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		
+
+		try {
+			serve = new ServerSocket(port);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 }
