@@ -20,11 +20,9 @@ public class ConnectRunnable implements Runnable {
 		try {
 			conn = new Socket(addr.getAddress(),addr.getPort());
 			
-			if(conn.isConnected()){
+			while(conn.isConnected()){
 				dte.setTitle("Connected to " + addr.getAddress() + ":" + addr.getPort());
 			}
-			
-			while(true);
 		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

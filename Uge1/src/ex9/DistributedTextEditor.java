@@ -55,6 +55,9 @@ public class DistributedTextEditor extends JFrame {
 	//9.2 - Implement connect when menu item Connect is pressed
 	Thread connectThread;
 	ConnectRunnable connectRunner;
+	
+	//9.3 - Implement connection between EventReplayers
+	
 
 	public DistributedTextEditor() {
 		area1.setFont(new Font("Monospaced",Font.PLAIN,12));
@@ -138,7 +141,7 @@ public class DistributedTextEditor extends JFrame {
 			// TODO: Become a server listening for connections on some port. DONE
 			int tempPort;
 
-			//Check if port number has been specified in the GUI
+			//Check if port number is blank
 
 			if(portNumber.getText()!=null){
 				tempPort = Integer.parseInt(portNumber.getText());
@@ -147,9 +150,7 @@ public class DistributedTextEditor extends JFrame {
 			}
 
 			listenRunner = new ListenRunnable(tempPort, DistributedTextEditor.this);
-
 			listenThread = new Thread(listenRunner);
-
 			listenThread.start();
 
 			changed = false;
