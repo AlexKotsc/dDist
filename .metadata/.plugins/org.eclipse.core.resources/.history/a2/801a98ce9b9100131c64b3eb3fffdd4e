@@ -1,0 +1,29 @@
+package ex9;
+
+public class ListenForTextEventRunnable implements Runnable {
+	
+	DocumentEventCapturer dec;
+	EventReplayer er;
+	
+	public ListenForTextEventRunnable(DocumentEventCapturer dec, EventReplayer er){
+		this.dec = dec;
+		this.er = er;
+	}
+
+	@Override
+	public void run() {
+		MyTextEvent mte;
+		
+		while(true){
+			try {
+				mte = dec.take();
+				er.receive(mte);
+				
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (SocketException e){
+				er.disconnect();
+			}
+		}
+	}
+}

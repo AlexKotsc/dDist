@@ -1,0 +1,11 @@
+package ex9;
+
+public class SendTextEventRunnable {
+	
+	DocumentEventCapturer dec;
+	
+	public SendTextEventRunnable(DocumentEventCapturer dec){
+		this.dec = dec;
+	}
+
+}

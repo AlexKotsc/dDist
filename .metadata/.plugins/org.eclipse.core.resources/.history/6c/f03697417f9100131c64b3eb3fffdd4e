@@ -1,0 +1,31 @@
+package ex9;
+
+
+
+public class SendTextEventRunnable implements Runnable {
+	
+	DocumentEventCapturer dec;
+	EventReplayer er;
+	
+	public oSendTextEventRunnable(DocumentEventCapturer dec, EventReplayer er){
+		this.dec = dec;
+		this.er = er;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		MyTextEvent mte;
+		
+		while(true){
+			try {
+				mte = dec.take();
+				er.receive(mte);
+				
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+}

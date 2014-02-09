@@ -10,8 +10,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -51,13 +51,10 @@ public class DistributedTextEditor extends JFrame {
 	//9.1 - Implement server socket listener when menu item listen is pressed.
 	Thread listenThread;
 	ListenRunnable listenRunner;
-	
+
 	//9.2 - Implement connect when menu item Connect is pressed
 	Thread connectThread;
 	ConnectRunnable connectRunner;
-	
-	//9.3 - Implement connection between EventReplayers
-	
 
 	public DistributedTextEditor() {
 		area1.setFont(new Font("Monospaced",Font.PLAIN,12));
@@ -119,10 +116,6 @@ public class DistributedTextEditor extends JFrame {
 		er = new EventReplayer(dec, area2);
 		ert = new Thread(er);
 		ert.start();
-
-
-		//Initialize our additions.
-
 	}
 
 	private KeyListener k1 = new KeyAdapter() {
@@ -137,8 +130,7 @@ public class DistributedTextEditor extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			saveOld();
 			area1.setText("");
-
-			// TODO: Become a server listening for connections on some port. DONE
+			
 			int tempPort;
 
 			//Check if port number is blank
@@ -149,6 +141,7 @@ public class DistributedTextEditor extends JFrame {
 				tempPort = 40001;
 			}
 
+			//Creates and starts thread with a ServerSocket, ready for incoming connections.
 			listenRunner = new ListenRunnable(tempPort, DistributedTextEditor.this);
 			listenThread = new Thread(listenRunner);
 			listenThread.start();
@@ -162,39 +155,60 @@ public class DistributedTextEditor extends JFrame {
 	Action Connect = new AbstractAction("Connect") {
 		public void actionPerformed(ActionEvent e) {
 			saveOld();
-			area1.setText("");
-			
+
+			//Clear both fields, ready for the new connection
+			clearFields();
+
+			//Sets the title to a temporary connecting to with the address and port of the server
 			setTitle("Connecting to " + ipaddress.getText() + ":" + portNumber.getText() + "...");
-						
+
+
+			//We get the address and port of our server from the text fields and create a new thread.
 			int tempPort;
 			InetSocketAddress tempAddress;
-			
+
 			if(portNumber.getText()!=null){
 				tempPort = Integer.parseInt(portNumber.getText());
 			} else {
 				tempPort = 40001;
 			}
-			
+
 			if(ipaddress.getText()!=null){
 				tempAddress = new InetSocketAddress(ipaddress.getText(), tempPort);
 			} else {
 				tempAddress = new InetSocketAddress("localhost", tempPort);
 			}
-			
+
 			connectRunner = new ConnectRunnable(tempAddress, DistributedTextEditor.this);
 			connectThread = new Thread(connectRunner);
 			connectThread.start();
-			
+
 			changed = false;
 			Save.setEnabled(false);
 			SaveAs.setEnabled(false);
 		}
 	};
 
+	//Utility - Delivers a connection from our threads to the Event Replayer.
+	public void setConnection(Socket s){
+		er.setConnection(s);
+	}
+
+	//Utility - Disconnects the socket in the Event Replayer and clears the fields.
+	public void disconnectER(){
+		clearFields();
+		er.disconnect();
+	}
+
+	//Utility - Clears the text fields
+	public void clearFields(){
+		area1.setText("");
+		area2.setText("");
+	}
+
 	Action Disconnect = new AbstractAction("Disconnect") {
 		public void actionPerformed(ActionEvent e) {	
-			setTitle("Disconnected");
-			// TODO
+			disconnectER();
 		}
 	};
 

@@ -1,0 +1,74 @@
+package ex9;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ListenRunnable implements Runnable {
+
+	int port;
+	ServerSocket server;
+	DistributedTextEditor dte;
+	Socket incoming;
+	ObjectInputStream input;
+	boolean notInterrupted;
+
+	public ListenRunnable(int port, DistributedTextEditor dte){
+		this.port = port;
+		this.dte = dte;
+	}
+
+	public void disconnect(){
+		if(incoming!=null){
+			if(!incoming.isClosed()){
+				try {
+					incoming.close();
+					System.out.println("Client was disconnected");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		try {
+			notInterrupted = true;
+			server = new ServerSocket(port);
+			server.setReuseAddress(true);
+			
+			dte.setTitle("Listening on " +
+					server.getInetAddress().getLocalHost() + 
+					server.getLocalPort());
+
+			while(true){
+				if(incoming!=null){
+					while(!incoming.isClosed()){
+						
+					}
+					if(incoming.isClosed()){
+						System.out.println("Client disconnected");
+						dte.disconnectER();
+						incoming=null;
+					}
+					
+				} else {
+
+				incoming = server.accept();
+				dte.setConnection(incoming);
+
+				}
+
+			}
+
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

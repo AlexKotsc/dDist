@@ -1,0 +1,9 @@
+package ex9;
+
+public class SendTextEventRunnable {
+	
+	public SendTextEventRunnable(DocumentEventCapturer dec){
+		
+	}
+
+}

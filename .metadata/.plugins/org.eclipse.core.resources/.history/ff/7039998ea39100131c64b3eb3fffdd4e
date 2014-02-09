@@ -1,0 +1,164 @@
+package ex9;
+
+import java.awt.EventQueue;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+
+import javax.swing.JTextArea;
+
+/**
+ * 
+ * Takes the event recorded by the DocumentEventCapturer and replays them in a
+ * JTextArea. The delay of 1 sec is only to make the individual steps in the
+ * reply visible to humans.
+ * 
+ * @author Jesper Buus Nielsen
+ * 
+ */
+public class EventReplayer implements Runnable {
+
+	private DocumentEventCapturer dec;
+	private JTextArea area;
+
+	Socket conn;
+
+	ObjectInputStream input;
+	ObjectOutputStream output;
+
+	Thread listenThread;
+
+	boolean connected;
+
+	public EventReplayer(DocumentEventCapturer dec, JTextArea area) {
+		this.dec = dec;
+		this.area = area;
+		listenThread = new Thread(new ListenForTextEventRunnable(this.dec,this));
+	}
+
+	public void disconnect(){
+
+		connected = false;
+		
+		try { 
+			conn.shutdownOutput();
+		} catch (SocketException e){
+			System.out.println("socket");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
+	public void setConnection(Socket s) {
+		try {
+			if(s==null){
+				connected=false;
+			} else {
+				conn = s;
+
+				output = new ObjectOutputStream(conn.getOutputStream());
+				output.flush();
+
+				input = new ObjectInputStream(conn.getInputStream());
+
+				connected = true;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void run() {
+		boolean wasInterrupted = false;
+
+		while (!wasInterrupted) {
+			try {
+
+				if(!listenThread.isAlive()){
+					listenThread.start();
+				}
+
+				if (connected) {
+					try {
+					MyTextEvent mte = (MyTextEvent) input.readObject();
+					queueTextEvent(mte);
+					} catch (EOFException e){
+						System.out.println("EOF Exception");
+						disconnect();
+					}
+				}
+			
+
+		} catch (Exception _) {
+			_.printStackTrace();
+			wasInterrupted = true;
+		}
+	}
+	System.out
+	.println("I'm the thread running the EventReplayer, now I die!");
+}
+
+public void receive(MyTextEvent mte){
+	if(connected){
+		System.out.println("Still connected");
+		try {
+			output.writeObject(mte);
+		} catch (SocketException e){ 
+			System.out.println("SocketException while trying to send object");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	} else {
+		queueTextEvent(mte);
+	}
+}
+
+public void queueTextEvent(MyTextEvent x){
+	if (x instanceof TextInsertEvent) {
+		final TextInsertEvent tie = (TextInsertEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					area.insert(tie.getText(), tie.getOffset());
+				} catch (Exception e) {
+					System.err.println(e);
+					/*
+					 * We catch all exceptions, as an uncaught
+					 * exception would make the EDT unwind, which is
+					 * now healthy.
+					 */
+				}
+			}
+		});
+	} else if (x instanceof TextRemoveEvent) {
+		final TextRemoveEvent tre = (TextRemoveEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					area.replaceRange(null, tre.getOffset(),
+							tre.getOffset() + tre.getLength());
+				} catch (Exception e) {
+					System.err.println(e);
+					/*
+					 * We catch all exceptions, as an uncaught
+					 * exception would make the EDT unwind, which is
+					 * now healthy.
+					 */
+				}
+			}
+		});
+	}	
+}
+
+public void waitForOneSecond() {
+	try {
+		Thread.sleep(1000);
+	} catch (InterruptedException _) {
+
+	}
+}
+}

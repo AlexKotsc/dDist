@@ -1,0 +1,60 @@
+package ex9;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+
+public class ConnectRunnable implements Runnable {
+
+	InetSocketAddress addr;
+	DistributedTextEditor dte;
+	Socket conn;
+	boolean notInterrupted;
+
+	public ConnectRunnable(InetSocketAddress addr, DistributedTextEditor dte){
+		this.addr = addr;
+		this.dte = dte;
+	}
+
+	public void disconnect(){
+		if(conn!=null){
+			if(!conn.isClosed()){
+				try {
+					conn.close();
+					System.out.println("Closing connection");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		try {
+			notInterrupted = true;
+			conn = new Socket(addr.getAddress(),addr.getPort());
+			
+			if(!conn.isClosed()){
+				dte.setConnection(conn);
+				dte.setTitle("Connected to " + addr.getAddress() + ":" + addr.getPort());
+			}
+			
+			while(!conn.isClosed()){
+				
+			}
+			
+			dte.disconnectER();
+		
+			dte.setTitle("Disconnected from server");
+			
+			return;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

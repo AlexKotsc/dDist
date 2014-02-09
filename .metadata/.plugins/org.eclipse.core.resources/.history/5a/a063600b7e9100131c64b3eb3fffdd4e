@@ -1,0 +1,31 @@
+package ex9;
+
+import java.io.ObjectOutputStream;
+
+public class SendTextEventRunnable implements Runnable {
+	
+	DocumentEventCapturer dec;
+	ObjectOutputStream out;
+	
+	public SendTextEventRunnable(DocumentEventCapturer dec, ObjectOutputStream out){
+		this.dec = dec;
+		this.out = out;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		MyTextEvent mte;
+		
+		while(true){
+			try {
+				mte = dec.take();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+
+}
