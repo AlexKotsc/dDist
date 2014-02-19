@@ -33,7 +33,7 @@ public class ListenRunnable implements Runnable {
 
 			while(true){
 				dte.setTitle("Listening on " +
-						server.getInetAddress().getLocalHost() + 
+						server.getInetAddress().getLocalHost() + ":" +
 						server.getLocalPort());
 				incoming = server.accept();
 				System.out.println("SERVER - START Incoming connection");

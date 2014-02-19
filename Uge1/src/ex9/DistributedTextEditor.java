@@ -60,7 +60,7 @@ public class DistributedTextEditor extends JFrame {
 	ConnectRunnable connectRunner;
 	
 	//For regexp
-	String ipRegexp = "(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)";
+	String ipRegexp = "((2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.){3}+(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)";
 	String portRegexp = "(5\\d{4}+|[1-4]\\d{4}+|\\d{1,4}+)";
 
 	public DistributedTextEditor() {
@@ -166,12 +166,12 @@ public class DistributedTextEditor extends JFrame {
 				System.out.println("Valid port");
 				tempPort = Integer.parseInt(portName);
 			} else {
-				area1.setText("Invalid port");
+				area1.setText("Invalid port. Try again");
 				portNumber.requestFocus();
 				return;
 			}
 			} catch (NumberFormatException ex){
-				area1.setText("No numbers found in port string");
+				area1.setText("Invalid port. Try again");
 				portNumber.requestFocus();
 				return;
 			}
@@ -212,7 +212,7 @@ public class DistributedTextEditor extends JFrame {
 			if(portMatcher(Integer.parseInt(portName))){
 				System.out.println("Valid port");
 			} else {
-				area1.setText("Port was wrong");
+				area1.setText("Invalid port. Try again.");
 				portNumber.requestFocus();
 				return;
 			}
@@ -221,7 +221,7 @@ public class DistributedTextEditor extends JFrame {
 				System.out.println("Valid IP");
 				
 			} else {
-				area1.setText("IP address was wrong.");
+				area1.setText("Invalid IP address. Try again.");
 				ipaddress.requestFocus();
 				return;
 			}

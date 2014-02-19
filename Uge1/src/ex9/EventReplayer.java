@@ -118,6 +118,7 @@ public class EventReplayer implements Runnable {
 		if(connected){
 			System.out.println(mte);
 			try {
+				mte.setLength(area.getText().length());
 				output.writeObject(mte);
 			} catch (SocketException e){
 				disconnect();
@@ -136,7 +137,11 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						area.insert(tie.getText(),tie.getOffset());
+						if(tie.getLength()!=area.getText().length()){
+							area.insert(tie.getText(),tie.getOffset()+(tie.getLength()-area.getText().length()));
+						} else {
+							area.insert(tie.getText(),tie.getOffset());
+						}
 						System.out.println(tie.getText());
 						dec.setListen(true);
 					} catch (Exception e) {
