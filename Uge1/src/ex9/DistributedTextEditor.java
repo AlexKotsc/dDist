@@ -5,6 +5,9 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -12,6 +15,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.regex.Pattern;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -30,8 +34,7 @@ import javax.swing.text.DefaultEditorKit;
 
 public class DistributedTextEditor extends JFrame {
 
-	private JTextArea area1 = new JTextArea(20,120);
-	private JTextArea area2 = new JTextArea(20,120);     
+	private JTextArea area1 = new JTextArea(20,120);     
 	private JTextField ipaddress = new JTextField("IP address here");     
 	private JTextField portNumber = new JTextField("Port number here");     
 
@@ -55,13 +58,14 @@ public class DistributedTextEditor extends JFrame {
 	//9.2 - Implement connect when menu item Connect is pressed
 	Thread connectThread;
 	ConnectRunnable connectRunner;
+	
+	//For regexp
+	String ipRegexp = "(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)";
+	String portRegexp = "(5\\d{4}+|[1-4]\\d{4}+|\\d{1,4}+)";
 
 	public DistributedTextEditor() {
 		area1.setFont(new Font("Monospaced",Font.PLAIN,12));
-
-		area2.setFont(new Font("Monospaced",Font.PLAIN,12));
 		((AbstractDocument)area1.getDocument()).setDocumentFilter(dec);
-		area2.setEditable(false);
 
 		Container content = getContentPane();
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -71,13 +75,7 @@ public class DistributedTextEditor extends JFrame {
 						JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 						JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		content.add(scroll1,BorderLayout.CENTER);
-
-		JScrollPane scroll2 = 
-				new JScrollPane(area2, 
-						JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-						JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		content.add(scroll2,BorderLayout.CENTER);	
-
+		
 		content.add(ipaddress,BorderLayout.CENTER);	
 		content.add(portNumber,BorderLayout.CENTER);	
 
@@ -109,13 +107,42 @@ public class DistributedTextEditor extends JFrame {
 		area1.addKeyListener(k1);
 		setTitle("Disconnected");
 		setVisible(true);
-		area1.insert("Example of how to capture stuff from the event queue and replay it in another buffer.\n" +
-				"Try to type and delete stuff in the top area.\n" + 
-				"Then figure out how it works.\n", 0);
+		area1.setText("");
 
-		er = new EventReplayer(dec, area2);
+		
+		er = new EventReplayer(dec, area1);
 		ert = new Thread(er);
 		ert.start();
+		
+		ipaddress.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent arg0) {
+				
+				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent arg0) {
+				ipaddress.setText("");
+				
+			}
+		});
+		
+		portNumber.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				portNumber.setText("");
+				
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+								
+			}	
+		});
+		
 	}
 
 	private KeyListener k1 = new KeyAdapter() {
@@ -133,13 +160,22 @@ public class DistributedTextEditor extends JFrame {
 			
 			int tempPort;
 
-			//Check if port number is blank
-
-			if(portNumber.getText()!=null){
-				tempPort = Integer.parseInt(portNumber.getText());
+			String portName = portNumber.getText();
+			try{
+			if(portMatcher(Integer.parseInt(portName))){
+				System.out.println("Valid port");
+				tempPort = Integer.parseInt(portName);
 			} else {
-				tempPort = 40001;
+				area1.setText("Invalid port");
+				portNumber.requestFocus();
+				return;
 			}
+			} catch (NumberFormatException ex){
+				area1.setText("No numbers found in port string");
+				portNumber.requestFocus();
+				return;
+			}
+			
 
 			//Creates and starts thread with a ServerSocket, ready for incoming connections.
 			listenRunner = new ListenRunnable(tempPort, DistributedTextEditor.this);
@@ -159,25 +195,40 @@ public class DistributedTextEditor extends JFrame {
 			//Clear both fields, ready for the new connection
 			clearFields();
 
+			String hostName = ipaddress.getText();
+			String portName = portNumber.getText();
+			
 			//Sets the title to a temporary connecting to with the address and port of the server
-			setTitle("Connecting to " + ipaddress.getText() + ":" + portNumber.getText() + "...");
+			
 
 
 			//We get the address and port of our server from the text fields and create a new thread.
 			int tempPort;
 			InetSocketAddress tempAddress;
-
-			if(portNumber.getText()!=null){
-				tempPort = Integer.parseInt(portNumber.getText());
+			
+			tempAddress = new InetSocketAddress("localhost", 40001);
+			
+			
+			if(portMatcher(Integer.parseInt(portName))){
+				System.out.println("Valid port");
 			} else {
-				tempPort = 40001;
+				area1.setText("Port was wrong");
+				portNumber.requestFocus();
+				return;
 			}
-
-			if(ipaddress.getText()!=null){
-				tempAddress = new InetSocketAddress(ipaddress.getText(), tempPort);
+			
+			if(ipMatcher(hostName)){
+				System.out.println("Valid IP");
+				
 			} else {
-				tempAddress = new InetSocketAddress("localhost", tempPort);
+				area1.setText("IP address was wrong.");
+				ipaddress.requestFocus();
+				return;
 			}
+			
+			setTitle("Connecting to " + hostName + ":" + portName + "...");
+			
+			tempAddress = new InetSocketAddress(ipaddress.getText(), Integer.parseInt(portName));
 
 			connectRunner = new ConnectRunnable(tempAddress, DistributedTextEditor.this);
 			connectThread = new Thread(connectRunner);
@@ -203,7 +254,6 @@ public class DistributedTextEditor extends JFrame {
 	//Utility - Clears the text fields
 	public void clearFields(){
 		area1.setText("");
-		area2.setText("");
 	}
 
 	Action Disconnect = new AbstractAction("Disconnect") {
@@ -266,6 +316,14 @@ public class DistributedTextEditor extends JFrame {
 
 	public static void main(String[] arg) {
 		new DistributedTextEditor();
-	}        
+	}     
+	
+	public boolean portMatcher(int port){
+		return Pattern.matches(portRegexp, Integer.toString(port));
+	}
+	
+	public boolean ipMatcher(String host){
+		return Pattern.matches(ipRegexp, host);
+	}
 
 }

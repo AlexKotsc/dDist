@@ -116,6 +116,7 @@ public class EventReplayer implements Runnable {
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
 	public void receive(MyTextEvent mte){
 		if(connected){
+			System.out.println(mte);
 			try {
 				output.writeObject(mte);
 			} catch (SocketException e){
@@ -123,19 +124,21 @@ public class EventReplayer implements Runnable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		} else {
-			queueTextEvent(mte);
 		}
 	}
 
 	//Handles displaying Insert and Remove variants in the JTextArea.
 	public void queueTextEvent(MyTextEvent x){
+		System.out.println(x);
 		if (x instanceof TextInsertEvent) {
 			final TextInsertEvent tie = (TextInsertEvent) x;
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {
-						area.insert(tie.getText(), tie.getOffset());
+						dec.setListen(false);
+						area.insert(tie.getText(),tie.getOffset());
+						System.out.println(tie.getText());
+						dec.setListen(true);
 					} catch (Exception e) {
 						System.err.println(e);
 						/*
@@ -151,8 +154,10 @@ public class EventReplayer implements Runnable {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {
+						dec.setListen(false);
 						area.replaceRange(null, tre.getOffset(),
 								tre.getOffset() + tre.getLength());
+						dec.setListen(true);
 					} catch (Exception e) {
 						System.err.println(e);
 						/*
