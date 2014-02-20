@@ -46,14 +46,25 @@ public class EventReplayer implements Runnable {
 		connected = false;
 
 		try { 
-			System.out.println(conn.isClosed());
+			conn.shutdownInput();
 			conn.shutdownOutput();
 			conn.close();
-			System.out.println(conn.isClosed());
 		} catch (SocketException e){
 			System.out.println("Socket exception");
+			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void closeConnection(){
+		if(!conn.isClosed()){
+			try {
+				connected = false;
+				output.writeObject(new DisconnectEvent());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}		
 		}
 
 	}
@@ -84,7 +95,7 @@ public class EventReplayer implements Runnable {
 		while (!wasInterrupted) {
 			try {
 
-				//Starts the listener if it isnt already running
+				//Starts the listener if it isn't already running
 				if(!listenThread.isAlive()){
 					listenThread.start();
 				}
@@ -92,33 +103,40 @@ public class EventReplayer implements Runnable {
 				//If connected to other text editor, read TextEvents and display them
 				if (connected) {
 					try {
-						MyTextEvent mte = (MyTextEvent) input.readObject();
-						queueTextEvent(mte);
+
+						MyEvent me = (MyEvent) input.readObject();
+
+						if(me instanceof MyTextEvent) queueTextEvent((MyTextEvent) me);
+						if(me instanceof DisconnectEvent) {
+							System.out.println("Received a DisconnectEvent");
+							connected = false;
+							disconnect();
+						}
+
 					} catch (EOFException e){
 						System.out.println("EOF Exception");
 						disconnect();
 					} catch (SocketException e){
 						System.out.println("Socket exception");
+						e.printStackTrace();
 						disconnect();
+
 					}
+
+
+				}} catch (Exception _) {
+					_.printStackTrace();
+					wasInterrupted = true;
 				}
-
-
-			} catch (Exception _) {
-				_.printStackTrace();
-				wasInterrupted = true;
-			}
 		}
 		System.out
 		.println("I'm the thread running the EventReplayer, now I die!");
-	}
 
+	}
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
 	public void receive(MyTextEvent mte){
 		if(connected){
-			System.out.println(mte);
 			try {
-				mte.setLength(area.getText().length());
 				output.writeObject(mte);
 			} catch (SocketException e){
 				disconnect();
@@ -130,19 +148,13 @@ public class EventReplayer implements Runnable {
 
 	//Handles displaying Insert and Remove variants in the JTextArea.
 	public void queueTextEvent(MyTextEvent x){
-		System.out.println(x);
 		if (x instanceof TextInsertEvent) {
 			final TextInsertEvent tie = (TextInsertEvent) x;
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {
 						dec.setListen(false);
-						if(tie.getLength()!=area.getText().length()){
-							area.insert(tie.getText(),tie.getOffset()+(tie.getLength()-area.getText().length()));
-						} else {
-							area.insert(tie.getText(),tie.getOffset());
-						}
-						System.out.println(tie.getText());
+						area.insert(tie.getText(),tie.getOffset());
 						dec.setListen(true);
 					} catch (Exception e) {
 						System.err.println(e);
@@ -176,11 +188,4 @@ public class EventReplayer implements Runnable {
 		}	
 	}
 
-	public void waitForOneSecond() {
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException _) {
-
-		}
-	}
 }

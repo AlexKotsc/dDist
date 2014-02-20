@@ -105,10 +105,12 @@ public class DistributedTextEditor extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		pack();
 		area1.addKeyListener(k1);
-		setTitle("Disconnected");
+		setTitle("Not connected");
 		setVisible(true);
 		area1.setText("");
 
+		
+		Disconnect.setEnabled(false);
 		
 		er = new EventReplayer(dec, area1);
 		ert = new Thread(er);
@@ -162,7 +164,7 @@ public class DistributedTextEditor extends JFrame {
 
 			String portName = portNumber.getText();
 			try{
-			if(portMatcher(Integer.parseInt(portName))){
+			if(portMatcher(portName)){
 				System.out.println("Valid port");
 				tempPort = Integer.parseInt(portName);
 			} else {
@@ -209,7 +211,7 @@ public class DistributedTextEditor extends JFrame {
 			tempAddress = new InetSocketAddress("localhost", 40001);
 			
 			
-			if(portMatcher(Integer.parseInt(portName))){
+			if(portMatcher(portName)){
 				System.out.println("Valid port");
 			} else {
 				area1.setText("Invalid port. Try again.");
@@ -243,12 +245,15 @@ public class DistributedTextEditor extends JFrame {
 	//Utility - Delivers a connection from our threads to the Event Replayer.
 	public void setConnection(Socket s){
 		er.setConnection(s);
+		Disconnect.setEnabled(true);
+		Listen.setEnabled(false);
+		Connect.setEnabled(false);
 	}
 
 	//Utility - Disconnects the socket in the Event Replayer and clears the fields.
 	public void disconnectER(){
 		clearFields();
-		er.disconnect();
+		er.closeConnection();
 	}
 
 	//Utility - Clears the text fields
@@ -318,8 +323,8 @@ public class DistributedTextEditor extends JFrame {
 		new DistributedTextEditor();
 	}     
 	
-	public boolean portMatcher(int port){
-		return Pattern.matches(portRegexp, Integer.toString(port));
+	public boolean portMatcher(String port){
+		return Pattern.matches(portRegexp, port);
 	}
 	
 	public boolean ipMatcher(String host){

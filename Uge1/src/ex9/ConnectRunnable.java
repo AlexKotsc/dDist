@@ -11,7 +11,6 @@ public class ConnectRunnable implements Runnable {
 	InetSocketAddress addr;
 	DistributedTextEditor dte;
 	Socket conn;
-	boolean notInterrupted;
 
 	public ConnectRunnable(InetSocketAddress addr, DistributedTextEditor dte){
 		this.addr = addr;
@@ -27,12 +26,18 @@ public class ConnectRunnable implements Runnable {
 			dte.setConnection(conn);
 			dte.setTitle("Connected to " + addr.getAddress() + ":" + addr.getPort());
 			dte.clearFields();	
+			dte.Connect.setEnabled(false);
+			dte.Listen.setEnabled(false);
+			dte.Disconnect.setEnabled(true);
 			while(!conn.isClosed()){
 
 			}
+			dte.Connect.setEnabled(true);
+			dte.Listen.setEnabled(true);
+			dte.Disconnect.setEnabled(false);
 			System.out.println("CLIENT - END Outgoing connection");
 			dte.clearFields();
-			dte.setTitle("Disconnected from server");
+			dte.setTitle("Not connected");
 
 			return;
 

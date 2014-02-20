@@ -28,22 +28,27 @@ public class ListenRunnable implements Runnable {
 			server.setReuseAddress(true);
 
 			dte.setTitle("Listening on " +
-					server.getInetAddress().getLocalHost() + 
+					server.getInetAddress().getLocalHost() + ":" +
 					server.getLocalPort());
-
+			
 			while(true){
-				dte.setTitle("Listening on " +
-						server.getInetAddress().getLocalHost() + ":" +
-						server.getLocalPort());
+				
 				incoming = server.accept();
 				System.out.println("SERVER - START Incoming connection");
 				dte.setConnection(incoming);
-				dte.setTitle("Connected with client");
+				dte.setTitle("Connected - " + incoming.getInetAddress().getHostAddress() + ":" + incoming.getPort());
 				dte.clearFields();
+				dte.Disconnect.setEnabled(true);
+				dte.Listen.setEnabled(false);
+				dte.Connect.setEnabled(false);
 				while(!incoming.isClosed()){
 
 				}
+				
 				System.out.println("SERVER - END Incoming connection");
+				dte.setTitle("Listening on " +
+						server.getInetAddress().getLocalHost() + ":" +
+						server.getLocalPort());
 				dte.clearFields();
 			}
 
