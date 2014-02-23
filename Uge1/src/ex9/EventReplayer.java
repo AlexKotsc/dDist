@@ -172,7 +172,7 @@ public class EventReplayer implements Runnable {
 						dec.setListen(false);
 
 						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
-							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
+							int diff = area.getText().length()-tie.getStringLength();
 							System.out.println("Insert diff: "  + diff);
 							if(lastPos<=tie.getOffset()){
 								area.insert(tie.getText(), tie.getOffset()+diff);
