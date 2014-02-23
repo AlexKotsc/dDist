@@ -141,7 +141,7 @@ public class EventReplayer implements Runnable {
 
 	}
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
-	public void receive(MyTextEvent mte){
+	public synchronized void receive(MyTextEvent mte){
 		if(connected){
 
 			mte.setStringLength(area.getText().length());
@@ -164,7 +164,7 @@ public class EventReplayer implements Runnable {
 	}
 
 	//Handles displaying Insert and Remove variants in the JTextArea.
-	public void queueTextEvent(MyTextEvent x){
+	public synchronized void queueTextEvent(MyTextEvent x){
 		if (x instanceof TextInsertEvent) {
 			final TextInsertEvent tie = (TextInsertEvent) x;
 			EventQueue.invokeLater(new Runnable() {
