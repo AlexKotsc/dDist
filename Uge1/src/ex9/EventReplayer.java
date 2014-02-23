@@ -213,7 +213,7 @@ public class EventReplayer implements Runnable {
 						if(tre.getStringLength()!=(area.getText().length()-tre.getLength())){
 							int diff = area.getText().length()+tre.getLength()-tre.getStringLength();
 							System.out.println("Diff: "  + diff);
-							area.replaceRange(null, tre.getOffset()+diff, tre.getOffset() + tre.getLength()+diff);
+							area.replaceRange(null, tre.getOffset()-diff, tre.getOffset() + tre.getLength()-diff);
 						} else {
 							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
 						}
@@ -228,7 +228,7 @@ public class EventReplayer implements Runnable {
 						dec.setListen(true);
 
 					} catch (Exception e) {
-						System.err.println(e + " at " + tre.getOffset() + " when text is " + area.getText().length());
+						System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) + " when text is " + area.getText().length());
 						/*
 						 * We catch all exceptions, as an uncaught
 						 * exception would make the EDT unwind, which is
