@@ -182,7 +182,11 @@ public class EventReplayer implements Runnable {
 						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
 							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
 							System.out.println("Diff: "  + diff);
-							area.insert(tie.getText(),tie.getOffset()+diff);
+							if(lastPos<tie.getOffset()){
+								area.insert(tie.getText(), tie.getOffset()+diff);
+							} else {
+								area.insert(tie.getText(), tie.getOffset());
+							}
 						} else {
 							area.insert(tie.getText(),tie.getOffset());
 						}
@@ -224,7 +228,7 @@ public class EventReplayer implements Runnable {
 //						} else {
 //							area.replaceRange(null, tre.getOffset()+(tre.getOffset()-lastPos),  tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength());
 //							System.out.println("Removing 2 text from: " + (tre.getOffset()+(tre.getOffset()-lastPos)) + " to " +  (tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength()));
-//						}
+//						} 
 						dec.setListen(true);
 
 					} catch (Exception e) {
