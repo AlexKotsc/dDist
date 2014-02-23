@@ -148,11 +148,11 @@ public class EventReplayer implements Runnable {
 			try {
 				if(mte instanceof TextInsertEvent){
 					TextInsertEvent t = (TextInsertEvent) mte; 
-					lastPos = t.getOffset() + t.getText().length();
+					lastPos = t.getOffset() + t.getText().length()-1;
 				}
 				if(mte instanceof TextRemoveEvent){
 					TextRemoveEvent t = (TextRemoveEvent) mte;
-					lastPos = t.getOffset();
+					lastPos = t.getOffset()-1;
 				}
 				System.out.println(lastPos + ":" + area.getCaretPosition());
 				output.writeObject(mte);
