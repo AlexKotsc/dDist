@@ -5,7 +5,6 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -13,8 +12,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
 import javax.swing.AbstractAction;
@@ -58,9 +59,8 @@ public class DistributedTextEditor extends JFrame {
 	//9.2 - Implement connect when menu item Connect is pressed
 	Thread connectThread;
 	ConnectRunnable connectRunner;
-	
+
 	//For regexp
-	String ipRegexp = "((2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)\\.){3}+(2[0-5][0-5]|1\\d{2}+|\\d{1,2}+)";
 	String portRegexp = "(5\\d{4}+|[1-4]\\d{4}+|\\d{1,4}+)";
 
 	public DistributedTextEditor() {
@@ -75,7 +75,7 @@ public class DistributedTextEditor extends JFrame {
 						JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 						JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		content.add(scroll1,BorderLayout.CENTER);
-		
+
 		content.add(ipaddress,BorderLayout.CENTER);	
 		content.add(portNumber,BorderLayout.CENTER);	
 
@@ -109,42 +109,42 @@ public class DistributedTextEditor extends JFrame {
 		setVisible(true);
 		area1.setText("");
 
-		
+
 		Disconnect.setEnabled(false);
-		
+
 		er = new EventReplayer(dec, area1);
 		ert = new Thread(er);
 		ert.start();
-		
+
 		ipaddress.addFocusListener(new FocusListener() {
-			
+
 			@Override
 			public void focusLost(FocusEvent arg0) {
-				
-				
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent arg0) {
-				ipaddress.setText("");
-				
-			}
-		});
-		
+				if(ipaddress.getText().equals("IP address here")){
+					ipaddress.setText("");
+
+				}
+			}});
+
 		portNumber.addFocusListener(new FocusListener() {
 
 			@Override
 			public void focusGained(FocusEvent e) {
-				portNumber.setText("");
-				
+				if(portNumber.getText().equals("Port number here")){
+					portNumber.setText("");
+				}
 			}
 
 			@Override
 			public void focusLost(FocusEvent e) {
-								
+
 			}	
 		});
-		
+
 	}
 
 	private KeyListener k1 = new KeyAdapter() {
@@ -159,25 +159,25 @@ public class DistributedTextEditor extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			saveOld();
 			area1.setText("");
-			
+
 			int tempPort;
 
 			String portName = portNumber.getText();
 			try{
-			if(portMatcher(portName)){
-				System.out.println("Valid port");
-				tempPort = Integer.parseInt(portName);
-			} else {
-				area1.setText("Invalid port. Try again");
-				portNumber.requestFocus();
-				return;
-			}
+				if(portMatcher(portName)){
+					System.out.println("Valid port");
+					tempPort = Integer.parseInt(portName);
+				} else {
+					area1.setText("Invalid port. Try again");
+					portNumber.requestFocus();
+					return;
+				}
 			} catch (NumberFormatException ex){
 				area1.setText("Invalid port. Try again");
 				portNumber.requestFocus();
 				return;
 			}
-			
+
 
 			//Creates and starts thread with a ServerSocket, ready for incoming connections.
 			listenRunner = new ListenRunnable(tempPort, DistributedTextEditor.this);
@@ -199,18 +199,18 @@ public class DistributedTextEditor extends JFrame {
 
 			String hostName = ipaddress.getText();
 			String portName = portNumber.getText();
-			
+
 			//Sets the title to a temporary connecting to with the address and port of the server
-			
+
 
 
 			//We get the address and port of our server from the text fields and create a new thread.
 			int tempPort;
 			InetSocketAddress tempAddress;
-			
+
 			tempAddress = new InetSocketAddress("localhost", 40001);
-			
-			
+
+
 			if(portMatcher(portName)){
 				System.out.println("Valid port");
 			} else {
@@ -218,18 +218,18 @@ public class DistributedTextEditor extends JFrame {
 				portNumber.requestFocus();
 				return;
 			}
-			
+
 			if(ipMatcher(hostName)){
 				System.out.println("Valid IP");
-				
+
 			} else {
 				area1.setText("Invalid IP address. Try again.");
 				ipaddress.requestFocus();
 				return;
 			}
-			
+
 			setTitle("Connecting to " + hostName + ":" + portName + "...");
-			
+
 			tempAddress = new InetSocketAddress(ipaddress.getText(), Integer.parseInt(portName));
 
 			connectRunner = new ConnectRunnable(tempAddress, DistributedTextEditor.this);
@@ -322,13 +322,22 @@ public class DistributedTextEditor extends JFrame {
 	public static void main(String[] arg) {
 		new DistributedTextEditor();
 	}     
-	
+
 	public boolean portMatcher(String port){
 		return Pattern.matches(portRegexp, port);
 	}
-	
+
 	public boolean ipMatcher(String host){
-		return Pattern.matches(ipRegexp, host);
+
+		InetAddress a;
+
+		try {
+			a = InetAddress.getByName(host);
+		} catch (UnknownHostException e) {
+			return false;
+		}
+
+		return true;
 	}
 
 }

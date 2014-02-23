@@ -31,6 +31,8 @@ public class EventReplayer implements Runnable {
 	ObjectInputStream input;
 	ObjectOutputStream output;
 
+	int lastPos;
+
 	Thread listenThread;
 
 	boolean connected;
@@ -110,6 +112,11 @@ public class EventReplayer implements Runnable {
 						if(me instanceof DisconnectEvent) {
 							System.out.println("Received a DisconnectEvent");
 							connected = false;
+							output.writeObject(new DisconnectReceivedEvent());
+							Thread.sleep(100);
+							disconnect();
+						}
+						if(me instanceof DisconnectReceivedEvent){
 							disconnect();
 						}
 
@@ -136,7 +143,16 @@ public class EventReplayer implements Runnable {
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
 	public void receive(MyTextEvent mte){
 		if(connected){
+			mte.setStringLength(area.getText().length());
 			try {
+				if(mte instanceof TextInsertEvent){
+					TextInsertEvent t = (TextInsertEvent) mte; 
+					lastPos = t.getOffset() + t.getText().length();
+				}
+				if(mte instanceof TextRemoveEvent){
+					TextRemoveEvent t = (TextRemoveEvent) mte;
+					lastPos = t.getOffset();
+				}
 				output.writeObject(mte);
 			} catch (SocketException e){
 				disconnect();
@@ -154,7 +170,16 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						area.insert(tie.getText(),tie.getOffset());
+						if(tie.getStringLength()==area.getText().length()+tie.getText().length()){
+							area.insert(tie.getText(),tie.getOffset());
+						}
+//						if(lastPos<=tie.getOffset() || tie.getOffset() == 0){
+//							area.insert(tie.getText(),tie.getOffset());
+//							System.out.println("Inserting 1 text from: " + (tie.getOffset()) + " to " + (tie.getOffset()+tie.getText().length()));
+//						} else {
+//							area.insert(tie.getText(), tie.getOffset()+(tie.getOffset()-lastPos));
+//							System.out.println("Inserting 2 text from: " + (tie.getOffset()+(tie.getOffset()-lastPos)) + " to " + (tie.getOffset()+(tie.getOffset()-lastPos)+tie.getText().length()));
+//						}
 						dec.setListen(true);
 					} catch (Exception e) {
 						System.err.println(e);
@@ -172,9 +197,19 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						area.replaceRange(null, tre.getOffset(),
-								tre.getOffset() + tre.getLength());
+						if(tre.getStringLength()==(area.getText().length()-tre.getLength())){
+							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+						}
+//						if(lastPos<=tre.getOffset() || tre.getOffset() == 0){
+//							area.replaceRange(null, tre.getOffset(),
+//									tre.getOffset() + tre.getLength());
+//							System.out.println("Removing 1 text from: " + tre.getOffset() + " to " +  (tre.getOffset()+tre.getLength()));
+//						} else {
+//							area.replaceRange(null, tre.getOffset()+(tre.getOffset()-lastPos),  tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength());
+//							System.out.println("Removing 2 text from: " + (tre.getOffset()+(tre.getOffset()-lastPos)) + " to " +  (tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength()));
+//						}
 						dec.setListen(true);
+
 					} catch (Exception e) {
 						System.err.println(e);
 						/*
