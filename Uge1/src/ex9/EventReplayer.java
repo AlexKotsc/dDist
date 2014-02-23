@@ -172,6 +172,12 @@ public class EventReplayer implements Runnable {
 						dec.setListen(false);
 						if(tie.getStringLength()==area.getText().length()+tie.getText().length()){
 							area.insert(tie.getText(),tie.getOffset());
+						} else {
+							if(tie.getOffset()>lastPos){
+								area.insert(tie.getText(), tie.getOffset()+(area.getText().length()-tie.getStringLength()));
+							} else {
+								area.insert(tie.getText(), tie.getOffset());
+							}
 						}
 //						if(lastPos<=tie.getOffset() || tie.getOffset() == 0){
 //							area.insert(tie.getText(),tie.getOffset());
@@ -199,6 +205,12 @@ public class EventReplayer implements Runnable {
 						dec.setListen(false);
 						if(tre.getStringLength()==(area.getText().length()-tre.getLength())){
 							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+						} else {
+							if(tre.getOffset()>lastPos){
+								area.replaceRange(null, tre.getOffset()+(area.getText().length()-tre.getStringLength()), tre.getOffset()+tre.getLength()+(area.getText().length()-tre.getStringLength()));
+							} else {
+								area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+							}
 						}
 //						if(lastPos<=tre.getOffset() || tre.getOffset() == 0){
 //							area.replaceRange(null, tre.getOffset(),
