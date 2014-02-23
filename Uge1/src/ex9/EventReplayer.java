@@ -148,11 +148,13 @@ public class EventReplayer implements Runnable {
 			try {
 				if(mte instanceof TextInsertEvent){
 					TextInsertEvent t = (TextInsertEvent) mte; 
-					lastPos = t.getOffset() + t.getText().length()-1;
+					//lastPos = t.getOffset() + t.getText().length()-1;
+					lastPos = area.getCaretPosition();
 				}
 				if(mte instanceof TextRemoveEvent){
 					TextRemoveEvent t = (TextRemoveEvent) mte;
-					lastPos = t.getOffset()-1;
+					//lastPos = t.getOffset()-1;
+					lastPos = area.getCaretPosition();
 				}
 				System.out.println(lastPos + ":" + area.getCaretPosition());
 				output.writeObject(mte);
@@ -172,9 +174,6 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-
-
-
 
 						if(lastPos < tie.getOffset()){
 							int diff = area.getDocument().getLength()-tie.getStringLength();
