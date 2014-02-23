@@ -185,7 +185,7 @@ public class EventReplayer implements Runnable {
 
 						dec.setListen(true);
 					} catch (Exception e) {
-						System.err.println(e);
+						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()));
 					}
 				}
 			});
