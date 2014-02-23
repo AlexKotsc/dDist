@@ -154,6 +154,7 @@ public class EventReplayer implements Runnable {
 					TextRemoveEvent t = (TextRemoveEvent) mte;
 					lastPos = t.getOffset();
 				}
+				System.out.println(lastPos + ":" + area.getCaretPosition());
 				output.writeObject(mte);
 			} catch (SocketException e){
 				disconnect();
@@ -175,10 +176,10 @@ public class EventReplayer implements Runnable {
 						
 						
 
-						if(area.getDocument().getLength()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
-
+						if(area.getDocument().getLength()>tie.getStringLength() && lastPos < tie.getOffset()){
+							int diff2 = tie.getStringLength()-area.getDocument().getLength();
 							int diff = area.getDocument().getLength()+tie.getText().length()-tie.getStringLength();
-							area.insert(tie.getText(), tie.getOffset()+diff);
+							area.insert(tie.getText(), tie.getOffset()+diff2);
 
 						} else {
 							area.insert(tie.getText(), tie.getOffset());
@@ -199,8 +200,9 @@ public class EventReplayer implements Runnable {
 
 						if(area.getDocument().getLength()-(tre.getLength())>tre.getStringLength() && lastPos < tre.getOffset()){
 
+							int diff2 = area.getDocument().getLength()-tre.getStringLength();
 							int diff =area.getDocument().getLength()-tre.getLength()-tre.getStringLength();
-							area.replaceRange(null, tre.getOffset()+diff, tre.getOffset()+tre.getLength()+diff);
+							area.replaceRange(null, tre.getOffset()+diff2, tre.getOffset()+tre.getLength()+diff2);
 
 						} else {
 							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
