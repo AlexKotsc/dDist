@@ -143,6 +143,7 @@ public class EventReplayer implements Runnable {
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
 	public void receive(MyTextEvent mte){
 		if(connected){
+
 			mte.setStringLength(area.getText().length());
 			try {
 				if(mte instanceof TextInsertEvent){
@@ -173,7 +174,7 @@ public class EventReplayer implements Runnable {
 
 
 						if(area.getText().length()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
-							
+
 							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
 							area.insert(tie.getText(), tie.getOffset()+diff);
 
@@ -194,7 +195,14 @@ public class EventReplayer implements Runnable {
 					try {
 						dec.setListen(false);
 
-						area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+						if(area.getText().length()-(tre.getLength())>tre.getStringLength() && lastPos < tre.getOffset()){
+
+							int diff = area.getText().length()-tre.getLength()-tre.getStringLength();
+							area.replaceRange(null, tre.getOffset()+diff, tre.getOffset()+tre.getLength()+diff);
+
+						} else {
+							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+						}
 
 						dec.setListen(true);
 
