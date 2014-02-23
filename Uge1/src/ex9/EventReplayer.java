@@ -171,24 +171,15 @@ public class EventReplayer implements Runnable {
 					try {
 						dec.setListen(false);
 
-						if(tie.getOffset()>lastPos){
-							int diff = area.getText().length() - tie.getStringLength();
+
+						if(area.getText().length()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
+							
+							int diff = area.getText().length()-tie.getStringLength();
 							area.insert(tie.getText(), tie.getOffset()+diff);
+
 						} else {
 							area.insert(tie.getText(), tie.getOffset());
 						}
-						
-//						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
-//							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
-//							System.out.println("Insert diff: "  + diff);
-//							if(lastPos<=tie.getOffset()){
-//								area.insert(tie.getText(), tie.getOffset()+diff);
-//							} else {
-//								area.insert(tie.getText(), tie.getOffset());
-//							}
-//						} else {
-//							area.insert(tie.getText(),tie.getOffset());
-//						}
 
 						dec.setListen(true);
 					} catch (Exception e) {
@@ -202,15 +193,9 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						if(tre.getStringLength()!=(area.getText().length()-tre.getLength())){
-							int diff = area.getText().length()-tre.getStringLength();
-							System.out.println("Rene diff: "  + diff);
-							if(lastPos<tre.getOffset()+diff){
-								area.replaceRange(null, tre.getOffset()-diff, tre.getOffset() + tre.getLength()-diff);
-							}
-						} else {
-							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
-						}
+
+						area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+
 						dec.setListen(true);
 
 					} catch (Exception e) {
