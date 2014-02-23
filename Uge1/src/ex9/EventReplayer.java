@@ -170,14 +170,21 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						if(tie.getStringLength()==area.getText().length()+tie.getText().length()){
-							area.insert(tie.getText(),tie.getOffset());
+//						if(tie.getStringLength()==area.getText().length()+tie.getText().length()){
+//							area.insert(tie.getText(),tie.getOffset());
+//						} else {
+//							if(tie.getOffset()>lastPos){
+//								area.insert(tie.getText(), tie.getOffset()+(area.getText().length()-tie.getStringLength()));
+//							} else {
+//								area.insert(tie.getText(), tie.getOffset());
+//							}
+//						}
+						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
+							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
+							System.out.println("Diff: "  + diff);
+							area.insert(tie.getText(),tie.getOffset()+diff);
 						} else {
-							if(tie.getOffset()>lastPos){
-								area.insert(tie.getText(), tie.getOffset()+(area.getText().length()-tie.getStringLength()));
-							} else {
-								area.insert(tie.getText(), tie.getOffset());
-							}
+							area.insert(tie.getText(),tie.getOffset());
 						}
 //						if(lastPos<=tie.getOffset() || tie.getOffset() == 0){
 //							area.insert(tie.getText(),tie.getOffset());
@@ -203,14 +210,12 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-						if(tre.getStringLength()==(area.getText().length()-tre.getLength())){
-							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+						if(tre.getStringLength()!=(area.getText().length()-tre.getLength())){
+							int diff = area.getText().length()+tre.getLength()-tre.getStringLength();
+							System.out.println("Diff: "  + diff);
+							area.replaceRange(null, tre.getOffset()+diff, tre.getOffset() + tre.getLength()+diff);
 						} else {
-							if(tre.getOffset()>lastPos){
-								area.replaceRange(null, tre.getOffset()+(area.getText().length()-tre.getStringLength()), tre.getOffset()+tre.getLength()+(area.getText().length()-tre.getStringLength()));
-							} else {
-								area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
-							}
+							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
 						}
 //						if(lastPos<=tre.getOffset() || tre.getOffset() == 0){
 //							area.replaceRange(null, tre.getOffset(),
@@ -223,7 +228,7 @@ public class EventReplayer implements Runnable {
 						dec.setListen(true);
 
 					} catch (Exception e) {
-						System.err.println(e);
+						System.err.println(e + " at " + tre.getOffset() + " when text is " + area.getText().length());
 						/*
 						 * We catch all exceptions, as an uncaught
 						 * exception would make the EDT unwind, which is
