@@ -174,8 +174,8 @@ public class EventReplayer implements Runnable {
 						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
 							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
 							System.out.println("Insert diff: "  + diff);
-							if(lastPos<tie.getOffset()){
-								area.insert(tie.getText(), tie.getOffset()-diff);
+							if(lastPos<=tie.getOffset()){
+								area.insert(tie.getText(), tie.getOffset()+diff);
 							} else {
 								area.insert(tie.getText(), tie.getOffset());
 							}
@@ -185,7 +185,7 @@ public class EventReplayer implements Runnable {
 
 						dec.setListen(true);
 					} catch (Exception e) {
-						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()));
+						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) + " when text is " + area.getText().length());
 					}
 				}
 			});
