@@ -171,17 +171,24 @@ public class EventReplayer implements Runnable {
 					try {
 						dec.setListen(false);
 
-						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
-							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
-							System.out.println("Insert diff: "  + diff);
-							if(lastPos<=tie.getOffset()){
-								area.insert(tie.getText(), tie.getOffset()+diff);
-							} else {
-								area.insert(tie.getText(), tie.getOffset());
-							}
+						if(tie.getOffset()>lastPos){
+							int diff = area.getText().length() - tie.getStringLength();
+							area.insert(tie.getText(), tie.getOffset()+diff);
 						} else {
-							area.insert(tie.getText(),tie.getOffset());
+							area.insert(tie.getText(), tie.getOffset());
 						}
+						
+//						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
+//							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
+//							System.out.println("Insert diff: "  + diff);
+//							if(lastPos<=tie.getOffset()){
+//								area.insert(tie.getText(), tie.getOffset()+diff);
+//							} else {
+//								area.insert(tie.getText(), tie.getOffset());
+//							}
+//						} else {
+//							area.insert(tie.getText(),tie.getOffset());
+//						}
 
 						dec.setListen(true);
 					} catch (Exception e) {
