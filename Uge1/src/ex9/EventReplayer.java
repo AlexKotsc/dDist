@@ -174,7 +174,7 @@ public class EventReplayer implements Runnable {
 
 						if(area.getText().length()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
 							
-							int diff = area.getText().length()-tie.getStringLength();
+							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
 							area.insert(tie.getText(), tie.getOffset()+diff);
 
 						} else {
