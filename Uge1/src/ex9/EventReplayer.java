@@ -141,10 +141,10 @@ public class EventReplayer implements Runnable {
 
 	}
 	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
-	public synchronized void receive(MyTextEvent mte){
+	public void receive(MyTextEvent mte){
 		if(connected){
 
-			mte.setStringLength(area.getText().length());
+			mte.setStringLength(area.getDocument().getLength());
 			try {
 				if(mte instanceof TextInsertEvent){
 					TextInsertEvent t = (TextInsertEvent) mte; 
@@ -164,7 +164,7 @@ public class EventReplayer implements Runnable {
 	}
 
 	//Handles displaying Insert and Remove variants in the JTextArea.
-	public synchronized void queueTextEvent(MyTextEvent x){
+	public void queueTextEvent(MyTextEvent x){
 		if (x instanceof TextInsertEvent) {
 			final TextInsertEvent tie = (TextInsertEvent) x;
 			EventQueue.invokeLater(new Runnable() {
@@ -172,10 +172,12 @@ public class EventReplayer implements Runnable {
 					try {
 						dec.setListen(false);
 
+						
+						
 
-						if(area.getText().length()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
+						if(area.getDocument().getLength()+tie.getText().length()>tie.getStringLength() && lastPos < tie.getOffset()){
 
-							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
+							int diff = area.getDocument().getLength()+tie.getText().length()-tie.getStringLength();
 							area.insert(tie.getText(), tie.getOffset()+diff);
 
 						} else {
@@ -184,7 +186,7 @@ public class EventReplayer implements Runnable {
 
 						dec.setListen(true);
 					} catch (Exception e) {
-						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) + " when text is " + area.getText().length());
+						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) + " when text is " + area.getDocument().getLength());
 					}
 				}
 			});
@@ -195,9 +197,9 @@ public class EventReplayer implements Runnable {
 					try {
 						dec.setListen(false);
 
-						if(area.getText().length()-(tre.getLength())>tre.getStringLength() && lastPos < tre.getOffset()){
+						if(area.getDocument().getLength()-(tre.getLength())>tre.getStringLength() && lastPos < tre.getOffset()){
 
-							int diff = area.getText().length()-tre.getLength()-tre.getStringLength();
+							int diff =area.getDocument().getLength()-tre.getLength()-tre.getStringLength();
 							area.replaceRange(null, tre.getOffset()+diff, tre.getOffset()+tre.getLength()+diff);
 
 						} else {
@@ -207,7 +209,7 @@ public class EventReplayer implements Runnable {
 						dec.setListen(true);
 
 					} catch (Exception e) {
-						System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) + " when text is " + area.getText().length());
+						System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) + " when text is " + area.getDocument().getLength());
 					}
 				}
 			});
