@@ -170,15 +170,7 @@ public class EventReplayer implements Runnable {
 				public void run() {
 					try {
 						dec.setListen(false);
-//						if(tie.getStringLength()==area.getText().length()+tie.getText().length()){
-//							area.insert(tie.getText(),tie.getOffset());
-//						} else {
-//							if(tie.getOffset()>lastPos){
-//								area.insert(tie.getText(), tie.getOffset()+(area.getText().length()-tie.getStringLength()));
-//							} else {
-//								area.insert(tie.getText(), tie.getOffset());
-//							}
-//						}
+
 						if(tie.getStringLength()!=area.getText().length()+tie.getText().length()){
 							int diff = area.getText().length()+tie.getText().length()-tie.getStringLength();
 							System.out.println("Diff: "  + diff);
@@ -190,21 +182,10 @@ public class EventReplayer implements Runnable {
 						} else {
 							area.insert(tie.getText(),tie.getOffset());
 						}
-//						if(lastPos<=tie.getOffset() || tie.getOffset() == 0){
-//							area.insert(tie.getText(),tie.getOffset());
-//							System.out.println("Inserting 1 text from: " + (tie.getOffset()) + " to " + (tie.getOffset()+tie.getText().length()));
-//						} else {
-//							area.insert(tie.getText(), tie.getOffset()+(tie.getOffset()-lastPos));
-//							System.out.println("Inserting 2 text from: " + (tie.getOffset()+(tie.getOffset()-lastPos)) + " to " + (tie.getOffset()+(tie.getOffset()-lastPos)+tie.getText().length()));
-//						}
+
 						dec.setListen(true);
 					} catch (Exception e) {
 						System.err.println(e);
-						/*
-						 * We catch all exceptions, as an uncaught
-						 * exception would make the EDT unwind, which is
-						 * now healthy.
-						 */
 					}
 				}
 			});
@@ -217,27 +198,16 @@ public class EventReplayer implements Runnable {
 						if(tre.getStringLength()!=(area.getText().length()-tre.getLength())){
 							int diff = area.getText().length()+tre.getLength()-tre.getStringLength();
 							System.out.println("Diff: "  + diff);
-							area.replaceRange(null, tre.getOffset()-diff, tre.getOffset() + tre.getLength()-diff);
+							if(lastPos<tre.getOffset()+diff){
+								area.replaceRange(null, tre.getOffset()-diff, tre.getOffset() + tre.getLength()-diff);
+							}
 						} else {
 							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
 						}
-//						if(lastPos<=tre.getOffset() || tre.getOffset() == 0){
-//							area.replaceRange(null, tre.getOffset(),
-//									tre.getOffset() + tre.getLength());
-//							System.out.println("Removing 1 text from: " + tre.getOffset() + " to " +  (tre.getOffset()+tre.getLength()));
-//						} else {
-//							area.replaceRange(null, tre.getOffset()+(tre.getOffset()-lastPos),  tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength());
-//							System.out.println("Removing 2 text from: " + (tre.getOffset()+(tre.getOffset()-lastPos)) + " to " +  (tre.getOffset()+(tre.getOffset()-lastPos)+tre.getLength()));
-//						} 
 						dec.setListen(true);
 
 					} catch (Exception e) {
 						System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) + " when text is " + area.getText().length());
-						/*
-						 * We catch all exceptions, as an uncaught
-						 * exception would make the EDT unwind, which is
-						 * now healthy.
-						 */
 					}
 				}
 			});
