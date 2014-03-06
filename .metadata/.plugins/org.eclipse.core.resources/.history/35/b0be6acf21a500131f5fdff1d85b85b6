@@ -1,0 +1,36 @@
+package ex9;
+
+public class mergeTextsRunnable implements Runnable {
+
+	DocumentEventCapturer dec;
+	EventReplayer er;
+	int shadowVersion, version;
+
+	public mergeTextsRunnable(DocumentEventCapturer dec, EventReplayer er){
+		this.dec = dec;
+		this.er = er;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true){
+			
+			shadowVersion = er.getShadowVersion();
+			version = er.getVersion();
+			
+			if(shadowVersion>version){
+				System.out.println("Shadow is newer, attempting to merge shadow into local");
+				
+				er.setVersion(shadowVersion);
+			
+			} else if (shadowVersion<version){
+				System.out.println("Shadow is older, attempting to merge local into shadow");
+				
+				
+				
+			}
+		}
+	}
+
+}

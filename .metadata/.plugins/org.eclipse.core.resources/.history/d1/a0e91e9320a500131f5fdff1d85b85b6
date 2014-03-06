@@ -1,0 +1,17 @@
+package ex9;
+
+public class mergeTextsRunnable implements Runnable {
+	
+	public mergeTextsRunnable(DocumentEventCapturer dec, EventReplayer er){
+		
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true){
+			if()
+		}
+	}
+
+}

@@ -10,6 +10,8 @@ import java.net.SocketException;
 
 import javax.swing.JTextArea;
 
+import ex9.diff_match_patch.Diff;
+
 /**
  * 
  * Takes the event recorded by the DocumentEventCapturer and replays them in a
@@ -34,14 +36,28 @@ public class EventReplayer implements Runnable {
 	int lastPos;
 
 	Thread listenThread;
+	Thread mergeThread;
 
 	boolean connected;
+	private int version;
+	private int shadowVersion;
+	private StringBuilder strBuilder;
+	private diff_match_patch diff;
+
 
 	public EventReplayer(DocumentEventCapturer dec, JTextArea area) {
 		this.dec = dec;
 		this.area = area;
 		listenThread = new Thread(new ListenForTextEventRunnable(this.dec,this));
+		mergeThread = new Thread(new mergeTextsRunnable(this.dec, this));
+		strBuilder = new StringBuilder();
+
+		version = 0;
+		shadowVersion = 0;
+
+		diff = new diff_match_patch();
 	}
+
 
 	//Sets the boolean connected to false and tries to close streams and socket.
 	public void disconnect(){
@@ -102,7 +118,10 @@ public class EventReplayer implements Runnable {
 					listenThread.start();
 				}
 
-				//If connected to other text editor, read TextEvents and display them
+				if(!mergeThread.isAlive()){
+					mergeThread.start();
+				}
+
 				if (connected) {
 					try {
 
@@ -140,7 +159,8 @@ public class EventReplayer implements Runnable {
 		.println("I'm the thread running the EventReplayer, now I die!");
 
 	}
-	//Handles callback from the listener thread. If connected, sends TextEvent, else displays it in local text field.
+	//Handles callback from the listener thread. If connected, sends TextEvent, 
+	//else displays it in local text field.
 	public void receive(MyTextEvent mte){
 		if(connected){
 
@@ -152,8 +172,11 @@ public class EventReplayer implements Runnable {
 				if(mte instanceof TextRemoveEvent){
 					TextRemoveEvent t = (TextRemoveEvent) mte;
 				}
-				lastPos = area.getCaretPosition();
+
 				output.writeObject(mte);
+
+				version++;
+
 			} catch (SocketException e){
 				disconnect();
 			} catch (IOException e) {
@@ -165,49 +188,127 @@ public class EventReplayer implements Runnable {
 	//Handles displaying Insert and Remove variants in the JTextArea.
 	public void queueTextEvent(MyTextEvent x){
 		if (x instanceof TextInsertEvent) {
-			final TextInsertEvent tie = (TextInsertEvent) x;
-			EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					try {
-						dec.setListen(false);
+			//			handleInsertEvent((TextInsertEvent) x);
 
-						if(lastPos < tie.getOffset()){
-							int diff = area.getDocument().getLength()-tie.getStringLength();
-							area.insert(tie.getText(), tie.getOffset()+diff);
-						} else {
-							area.insert(tie.getText(), tie.getOffset());
-						}
+			insertShadow((TextInsertEvent) x);
 
-						dec.setListen(true);
-					} catch (Exception e) {
-						System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) + " when text is " + area.getDocument().getLength());
-					}
-				}
-			});
 		} else if (x instanceof TextRemoveEvent) {
-			final TextRemoveEvent tre = (TextRemoveEvent) x;
-			EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					try {
-						dec.setListen(false);
+			//			handleRemoveEvent((TextRemoveEvent) x);
 
-						if(lastPos < tre.getOffset()){
+			removeShadow((TextRemoveEvent) x);
 
-							int renediff = area.getDocument().getLength()-tre.getStringLength();
-							area.replaceRange(null, tre.getOffset()+renediff, Math.min(area.getDocument().getLength(),tre.getOffset()+tre.getLength()+renediff));
-
-						} else {
-							area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
-						}
-
-						dec.setListen(true);
-
-					} catch (Exception e) {
-						System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) + " when text is " + area.getDocument().getLength());
-					}
-				}
-			});
 		}	
+
+		System.out.println(shadowVersion + ": " + strBuilder.toString());
+	}
+
+	private void removeShadow(TextRemoveEvent x) {
+		strBuilder.delete(Math.min(x.getOffset(), strBuilder.length()), Math.min(x.getLength(), strBuilder.length()));
+
+		shadowVersion++;
+	}
+
+
+	private void insertShadow(TextInsertEvent x) {
+		if(x.getOffset()>strBuilder.length()){
+			strBuilder.append(x.getText());
+		} else {
+			strBuilder.insert(x.getOffset(), x.getText());
+		}
+
+		shadowVersion++;
+	}
+
+
+	public void handleInsertEvent(TextInsertEvent x){
+		final TextInsertEvent tie = (TextInsertEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					dec.setListen(false);
+
+
+
+
+					dec.setListen(true);
+				} catch (Exception e) {
+					System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) 
+							+ " when text is " + area.getDocument().getLength());
+				}
+			}
+		});
+	}
+
+	public void handleRemoveEvent(TextRemoveEvent x){
+		final TextRemoveEvent tre = (TextRemoveEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					dec.setListen(false);
+					//The same goes for removeEvents, we need to change the offset if the last 
+					//modification was before the offset, so we remove the correct parts.
+
+					dec.setListen(true);
+
+				} catch (Exception e) {
+					System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) 
+							+ " when text is " + area.getDocument().getLength());
+				}
+			}
+		});
+	}
+
+	public int getShadowVersion(){
+		return shadowVersion;
+	}
+
+	public int getVersion(){
+		return version;
+	}
+
+	public void setShadowVersion(int v){
+		shadowVersion = v;
+	}
+
+	public void setVersion(int v){
+		version = v;
+	}
+
+
+	public void mergeShadow() {
+		// TODO Auto-generated method stub
+		dec.setListen(false);
+		int length = 0;
+
+		for(Diff d: diff.diff_main(area.getText(),strBuilder.toString())){
+			System.out.println(d);
+			switch(d.operation) {
+			case EQUAL:
+				length += d.text.length();
+				break;
+			case INSERT:
+				if(length>area.getText().length()){
+					area.append(d.text);
+				} else {
+					area.insert(d.text, length);
+				}
+				length += d.text.length();
+				break;
+			case DELETE:
+				area.replaceRange(null, Math.min(length, area.getText().length()), Math.min((length+d.text.length()), area.getText().length()));
+				length -= d.text.length();
+				break;
+			}
+		}
+		dec.setListen(true);
+	}
+
+
+	public void mergeLocal() {
+		// TODO Auto-generated method stub
+		for(Diff d: diff.diff_main(strBuilder.toString(), area.getText())){
+			System.out.println(d);
+		}
 	}
 
 }

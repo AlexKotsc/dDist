@@ -1,0 +1,30 @@
+package ex9;
+
+public class mergeTextsRunnable implements Runnable {
+
+	DocumentEventCapturer dec;
+	EventReplayer er;
+	int shadowVersion, version;
+
+	public mergeTextsRunnable(DocumentEventCapturer dec, EventReplayer er){
+		this.dec = dec;
+		this.er = er;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true){
+			
+			shadowVersion = er.getShadowVersion();
+			version = er.getVersion();
+			
+			if(shadowVersion>version){
+			
+			} else if (shadowVersion<version){
+				
+			}
+		}
+	}
+
+}

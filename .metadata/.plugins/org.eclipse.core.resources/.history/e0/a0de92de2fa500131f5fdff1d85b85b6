@@ -1,0 +1,312 @@
+package ex9;
+
+import java.awt.EventQueue;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+
+import javax.swing.JTextArea;
+
+import ex9.diff_match_patch.Diff;
+
+/**
+ * 
+ * Takes the event recorded by the DocumentEventCapturer and replays them in a
+ * JTextArea. The delay of 1 sec is only to make the individual steps in the
+ * reply visible to humans.
+ * 
+ * @author Jesper Buus Nielsen
+ * 
+ */
+
+// Added the possibiliy of connecting to a remote text editor and replaying the Events there.
+public class EventReplayer implements Runnable {
+
+	private DocumentEventCapturer dec;
+	private JTextArea area;
+
+	Socket conn;
+
+	ObjectInputStream input;
+	ObjectOutputStream output;
+
+	int lastPos;
+
+	Thread listenThread;
+	Thread mergeThread;
+
+	boolean connected;
+	private int version;
+	private int shadowVersion;
+	private StringBuilder strBuilder;
+	private diff_match_patch diff;
+
+
+	public EventReplayer(DocumentEventCapturer dec, JTextArea area) {
+		this.dec = dec;
+		this.area = area;
+		listenThread = new Thread(new ListenForTextEventRunnable(this.dec,this));
+		mergeThread = new Thread(new mergeTextsRunnable(this.dec, this));
+		strBuilder = new StringBuilder();
+
+		version = 0;
+		shadowVersion = 0;
+
+		diff = new diff_match_patch();
+	}
+
+
+	//Sets the boolean connected to false and tries to close streams and socket.
+	public void disconnect(){
+		connected = false;
+
+		try { 
+			conn.shutdownInput();
+			conn.shutdownOutput();
+			conn.close();
+		} catch (SocketException e){
+			System.out.println("Socket exception");
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void closeConnection(){
+		if(!conn.isClosed()){
+			try {
+				connected = false;
+				output.writeObject(new DisconnectEvent());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}		
+		}
+
+	}
+
+	//Sets the connection for the ER to send/receive TextEvents.
+	public void setConnection(Socket s) {
+		try {
+			if(s==null){
+				connected=false;
+			} else {
+				conn = s;
+
+				output = new ObjectOutputStream(conn.getOutputStream());
+				output.flush();
+
+				input = new ObjectInputStream(conn.getInputStream());
+
+				connected = true;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void run() {
+		boolean wasInterrupted = false;
+
+		while (!wasInterrupted) {
+			try {
+
+				//Starts the listener if it isn't already running
+				if(!listenThread.isAlive()){
+					listenThread.start();
+				}
+
+				if(!mergeThread.isAlive()){
+					mergeThread.start();
+				}
+
+				if (connected) {
+					try {
+
+						MyEvent me = (MyEvent) input.readObject();
+
+						if(me instanceof MyTextEvent) queueTextEvent((MyTextEvent) me);
+						if(me instanceof DisconnectEvent) {
+							System.out.println("Received a DisconnectEvent");
+							connected = false;
+							output.writeObject(new DisconnectReceivedEvent());
+							Thread.sleep(100);
+							disconnect();
+						}
+						if(me instanceof DisconnectReceivedEvent){
+							disconnect();
+						}
+
+					} catch (EOFException e){
+						System.out.println("EOF Exception");
+						disconnect();
+					} catch (SocketException e){
+						System.out.println("Socket exception");
+						e.printStackTrace();
+						disconnect();
+
+					}
+
+
+				}} catch (Exception _) {
+					_.printStackTrace();
+					wasInterrupted = true;
+				}
+		}
+		System.out
+		.println("I'm the thread running the EventReplayer, now I die!");
+
+	}
+	//Handles callback from the listener thread. If connected, sends TextEvent, 
+	//else displays it in local text field.
+	public void receive(MyTextEvent mte){
+		if(connected){
+
+			mte.setStringLength(area.getDocument().getLength());
+			try {
+				if(mte instanceof TextInsertEvent){
+					TextInsertEvent t = (TextInsertEvent) mte; 
+				}
+				if(mte instanceof TextRemoveEvent){
+					TextRemoveEvent t = (TextRemoveEvent) mte;
+				}
+
+				output.writeObject(mte);
+
+				version++;
+
+			} catch (SocketException e){
+				disconnect();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	//Handles displaying Insert and Remove variants in the JTextArea.
+	public void queueTextEvent(MyTextEvent x){
+		if (x instanceof TextInsertEvent) {
+			//			handleInsertEvent((TextInsertEvent) x);
+
+			insertShadow((TextInsertEvent) x);
+
+		} else if (x instanceof TextRemoveEvent) {
+			//			handleRemoveEvent((TextRemoveEvent) x);
+
+			removeShadow((TextRemoveEvent) x);
+
+		}	
+
+		System.out.println(shadowVersion + ": " + strBuilder.toString());
+	}
+
+	private void removeShadow(TextRemoveEvent x) {
+		strBuilder.delete(Math.min(x.getOffset(), strBuilder.length()), Math.min(x.getLength(), strBuilder.length()));
+
+		shadowVersion++;
+	}
+
+
+	private void insertShadow(TextInsertEvent x) {
+		if(x.getOffset()>strBuilder.length()){
+			strBuilder.append(x.getText());
+		} else {
+			strBuilder.insert(x.getOffset(), x.getText());
+		}
+
+		shadowVersion++;
+	}
+
+
+	public void handleInsertEvent(TextInsertEvent x){
+		final TextInsertEvent tie = (TextInsertEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					dec.setListen(false);
+
+
+
+
+					dec.setListen(true);
+				} catch (Exception e) {
+					System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) 
+							+ " when text is " + area.getDocument().getLength());
+				}
+			}
+		});
+	}
+
+	public void handleRemoveEvent(TextRemoveEvent x){
+		final TextRemoveEvent tre = (TextRemoveEvent) x;
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					dec.setListen(false);
+					//The same goes for removeEvents, we need to change the offset if the last 
+					//modification was before the offset, so we remove the correct parts.
+
+					dec.setListen(true);
+
+				} catch (Exception e) {
+					System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) 
+							+ " when text is " + area.getDocument().getLength());
+				}
+			}
+		});
+	}
+
+	public int getShadowVersion(){
+		return shadowVersion;
+	}
+
+	public int getVersion(){
+		return version;
+	}
+
+	public void setShadowVersion(int v){
+		shadowVersion = v;
+	}
+
+	public void setVersion(int v){
+		version = v;
+	}
+
+
+	public void mergeShadow() {
+		// TODO Auto-generated method stub
+
+		int length = 0;
+
+		for(Diff d: diff.diff_main(area.getText(),strBuilder.toString())){
+			System.out.println(d);
+			switch(d.operation) {
+			case EQUAL:
+				length += d.text.length();
+				break;
+			case INSERT:
+				if(length>area.getText().length()){
+					area.append(d.text);
+				} else {
+					area.insert(d.text, length);
+				}
+				length += d.text.length();
+				break;
+			case DELETE:
+				area.replaceRange(null, Math.min(length, area.getText().length()), Math.min((length+d.text.length()), area.getText().length())));
+				break;
+			}
+		}
+	}
+
+
+	public void mergeLocal() {
+		// TODO Auto-generated method stub
+		for(Diff d: diff.diff_main(strBuilder.toString(), area.getText())){
+			System.out.println(d);
+		}
+	}
+
+}
