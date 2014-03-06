@@ -306,9 +306,27 @@ public class EventReplayer implements Runnable {
 
 	public void mergeLocal() {
 		// TODO Auto-generated method stub
+		dec.setListen(false);
+		int length = 0;
+		
 		for(Diff d: diff.diff_main(strBuilder.toString(), area.getText())){
 			System.out.println(d);
+			switch(d.operation){
+			case EQUAL:
+				length += d.text.length();
+				break;
+			case INSERT:
+				strBuilder.insert(length, d.text);
+				length += d.text.length();
+				break;
+			case DELETE:
+				strBuilder.delete(length, length+d.text.length());
+				length -= d.text.length();
+				break;
+			}
 		}
+		
+		dec.setListen(true);
 	}
 
 }
