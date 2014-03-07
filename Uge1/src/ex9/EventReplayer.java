@@ -49,7 +49,7 @@ public class EventReplayer implements Runnable {
 		this.dec = dec;
 		this.area = area;
 		listenThread = new Thread(new ListenForTextEventRunnable(this.dec,this));
-		mergeThread = new Thread(new mergeTextsRunnable(this.dec, this));
+		mergeThread = new Thread(new MergeTextsRunnable(this.dec, this));
 		strBuilder = new StringBuilder();
 
 		version = 0;
@@ -118,11 +118,12 @@ public class EventReplayer implements Runnable {
 					listenThread.start();
 				}
 
-				if(!mergeThread.isAlive()){
-					mergeThread.start();
-				}
-
 				if (connected) {
+					
+					if(!mergeThread.isAlive()){
+						mergeThread.start();
+					}
+					
 					try {
 
 						MyEvent me = (MyEvent) input.readObject();
@@ -149,7 +150,6 @@ public class EventReplayer implements Runnable {
 
 					}
 
-
 				}} catch (Exception _) {
 					_.printStackTrace();
 					wasInterrupted = true;
@@ -159,6 +159,7 @@ public class EventReplayer implements Runnable {
 		.println("I'm the thread running the EventReplayer, now I die!");
 
 	}
+	
 	//Handles callback from the listener thread. If connected, sends TextEvent, 
 	//else displays it in local text field.
 	public void receive(MyTextEvent mte){
@@ -188,12 +189,10 @@ public class EventReplayer implements Runnable {
 	//Handles displaying Insert and Remove variants in the JTextArea.
 	public void queueTextEvent(MyTextEvent x){
 		if (x instanceof TextInsertEvent) {
-			//			handleInsertEvent((TextInsertEvent) x);
 
 			insertShadow((TextInsertEvent) x);
 
 		} else if (x instanceof TextRemoveEvent) {
-			//			handleRemoveEvent((TextRemoveEvent) x);
 
 			removeShadow((TextRemoveEvent) x);
 
@@ -203,11 +202,10 @@ public class EventReplayer implements Runnable {
 	}
 
 	private void removeShadow(TextRemoveEvent x) {
-		strBuilder.delete(Math.min(x.getOffset(), strBuilder.length()), Math.min(x.getLength(), strBuilder.length()));
+		strBuilder.delete(Math.min(x.getOffset(), strBuilder.length()-1), Math.min(x.getLength()-1, strBuilder.length()-1));
 
 		shadowVersion++;
 	}
-
 
 	private void insertShadow(TextInsertEvent x) {
 		if(x.getOffset()>strBuilder.length()){
@@ -217,45 +215,6 @@ public class EventReplayer implements Runnable {
 		}
 
 		shadowVersion++;
-	}
-
-
-	public void handleInsertEvent(TextInsertEvent x){
-		final TextInsertEvent tie = (TextInsertEvent) x;
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					dec.setListen(false);
-
-
-
-
-					dec.setListen(true);
-				} catch (Exception e) {
-					System.err.println(e + " at " + tie.getOffset() + " to " + (tie.getOffset()+tie.getText().length()) 
-							+ " when text is " + area.getDocument().getLength());
-				}
-			}
-		});
-	}
-
-	public void handleRemoveEvent(TextRemoveEvent x){
-		final TextRemoveEvent tre = (TextRemoveEvent) x;
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					dec.setListen(false);
-					//The same goes for removeEvents, we need to change the offset if the last 
-					//modification was before the offset, so we remove the correct parts.
-
-					dec.setListen(true);
-
-				} catch (Exception e) {
-					System.err.println(e + " at " + tre.getOffset() + " to " + (tre.getOffset()+tre.getLength()) 
-							+ " when text is " + area.getDocument().getLength());
-				}
-			}
-		});
 	}
 
 	public int getShadowVersion(){
@@ -274,9 +233,8 @@ public class EventReplayer implements Runnable {
 		version = v;
 	}
 
-
 	public void mergeShadow() {
-		// TODO Auto-generated method stub
+		
 		dec.setListen(false);
 		int length = 0;
 
@@ -303,9 +261,8 @@ public class EventReplayer implements Runnable {
 		dec.setListen(true);
 	}
 
-
 	public void mergeLocal() {
-		// TODO Auto-generated method stub
+		
 		dec.setListen(false);
 		int length = 0;
 		
@@ -328,5 +285,4 @@ public class EventReplayer implements Runnable {
 		
 		dec.setListen(true);
 	}
-
 }
